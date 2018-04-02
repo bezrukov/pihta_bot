@@ -4,9 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"fmt"
 )
 
-func initRoutes() {
+func initRoutes(port string) {
 	router := gin.Default()
 	gin.SetMode("debug")
 
@@ -17,7 +18,7 @@ func initRoutes() {
 
 	router.GET("/test", botCtrl.testRoute)
 
-	router.Run(":2000")
+	router.Run(fmt.Sprintf(":%s", port))
 }
 
 func ping(c *gin.Context) {
