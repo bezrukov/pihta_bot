@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
+	"fmt"
+	// "strconv"
 )
 
 type botCtrl struct {
@@ -12,7 +14,7 @@ func newBotCtrl() *botCtrl {
 	return &botCtrl{}
 }
 
-func (ctrl *botCtrl) init(token string, userIds *map[int64]User) {
+func (ctrl *botCtrl) init(token string, userIds map[int]User) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		log.Panic(err)
@@ -31,16 +33,17 @@ func (ctrl *botCtrl) init(token string, userIds *map[int64]User) {
 		if update.Message == nil {
 			continue
 		}
+		var userId int
+		userId = update.Message.From.ID
 
-		//fmt.Println(update.Message.From.ID)
-		//if
+		_, ok := userIds[userId]
+		if !ok {
+			userIds[userId] = User{Id: userId, Name: update.Message.From.FirstName + update.Message.From.LastName}
+		}
 
-
-		// log.Printf("%#v", update)
 		switch update.Message.Command() {
 		case "start":
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "nah idi")
-			// отправляем
 			bot.Send(msg)
 		}
 
