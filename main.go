@@ -4,6 +4,8 @@ import (
 	"flag"
 	"log"
 	"os"
+	"pihta_bot/modules/dealMock"
+	"fmt"
 )
 
 type User struct {
@@ -36,4 +38,15 @@ func main() {
 	botCtrl := newBotCtrl()
 
 	botCtrl.init(*token, userIds)
+
+	deal := dealMock.NewDeal()
+
+	deal.Start(3000)
+	t := 0
+
+	for t < 30 {
+		t++
+		result := deal.Process()
+		fmt.Println(result)
+	}
 }
