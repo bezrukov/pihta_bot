@@ -6,6 +6,10 @@ import (
 	"os"
 )
 
+type User struct {
+	Id int64
+	Name string
+}
 func main() {
 
 	var (
@@ -13,6 +17,8 @@ func main() {
 		token = flag.String("token", "", "Telegram Bot Token")
 		port = flag.String("port", "2000", "Port application")
 	)
+
+	var userIds map[int64]User
 
 	flag.Parse()
 
@@ -25,8 +31,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	// context := &daemon.Context{PidFileName: pidFileFlag}
-	// child, err := context.Reborn()
+	go initRoutes(*port)
 
-	initRoutes(*port)
+	botCtrl := newBotCtrl()
+
+	botCtrl.init(*token, &userIds)
 }
