@@ -8,7 +8,7 @@ import (
 
 func initRoutes() {
 	router := gin.Default()
-	gin.SetMode("develop")
+	gin.SetMode("debug")
 
 	botCtrl := newBotCtrl()
 
@@ -16,6 +16,8 @@ func initRoutes() {
 	router.GET("/", ping)  // this route for consul health check
 
 	router.GET("/test", botCtrl.testRoute)
+
+	router.Run(":2000")
 }
 
 func ping(c *gin.Context) {
