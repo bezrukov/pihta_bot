@@ -20,7 +20,7 @@ func newBotCtrl() *botCtrl {
 	return &botCtrl{}
 }
 
-func (ctrl *botCtrl) init(token string, userIds *map[int64]User) {
+func (ctrl *botCtrl) init(token string, userIds map[int]User) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		log.Panic(err)
@@ -61,6 +61,13 @@ func (ctrl *botCtrl) init(token string, userIds *map[int64]User) {
 
 		if update.Message == nil {
 			continue
+		}
+		var userId int
+		userId = update.Message.From.ID
+
+		_, ok := userIds[userId]
+		if !ok {
+			userIds[userId] = User{Id: userId, Name: update.Message.From.FirstName + update.Message.From.LastName}
 		}
 
 		switch update.Message.Command() {

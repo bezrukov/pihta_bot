@@ -7,7 +7,7 @@ import (
 )
 
 type User struct {
-	Id int64
+	Id int
 	Name string
 }
 func main() {
@@ -18,7 +18,7 @@ func main() {
 		port = flag.String("port", "2000", "Port application")
 	)
 
-	var userIds map[int64]User
+	userIds := map[int]User{}
 
 	flag.Parse()
 
@@ -35,5 +35,5 @@ func main() {
 
 	botCtrl := newBotCtrl()
 
-	botCtrl.init(*token, &userIds)
+	botCtrl.init(*token, userIds)
 }
