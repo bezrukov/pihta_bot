@@ -6,6 +6,8 @@ import (
 	"github.com/bezrukov/pihta_bot/modules/dealMock"
 	"time"
 	"math/rand"
+	"fmt"
+	"github.com/bezrukov/pihta_bot/modules/account"
 )
 
 var menuKeyboard = tgbotapi.NewReplyKeyboard(
@@ -72,12 +74,33 @@ func (ctrl *botCtrl) init(token string) {
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
+	balance := account.NewBalance()
+
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
 	updates, err := bot.GetUpdatesChan(u)
 
 	for update := range updates {
+
+		refill := func(value int){
+			balance.Inc(value)
+			msg := tgbotapi.NewEditMessageText(
+				update.CallbackQuery.Message.Chat.ID,
+				update.CallbackQuery.Message.MessageID,
+				fmt.Sprintf("Успешное пополнение. Ваш баланс %vр", balance.Current()),
+			)
+			bot.Send(msg)
+
+			msg1 := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Поехали!")
+			msg1.ReplyMarkup = &backKeyboard
+			bot.Send(msg1)
+
+			msg2 := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, getRandomAdvice())
+			msg2.ReplyMarkup = &vitaliyKeyboard
+
+			bot.Send(msg2)
+		}
 
 		if update.CallbackQuery != nil {
 			switch update.CallbackQuery.Data {
@@ -88,8 +111,8 @@ func (ctrl *botCtrl) init(token string) {
 					"Куда пойдёт актив через 1 минуту?")
 				keyboard := tgbotapi.NewInlineKeyboardMarkup(
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("Вверх", "up"),
-						tgbotapi.NewInlineKeyboardButtonData("Вниз", "down"),
+						tgbotapi.NewInlineKeyboardButtonData("\xF0\x9F\x94\xBC Вверх", "up"),
+						tgbotapi.NewInlineKeyboardButtonData("\xF0\x9F\x94\xBD Вниз", "down"),
 					),
 				)
 				msg.ReplyMarkup = &keyboard
@@ -109,7 +132,7 @@ func (ctrl *botCtrl) init(token string) {
 				msg := tgbotapi.NewEditMessageText(
 					update.CallbackQuery.Message.Chat.ID,
 					update.CallbackQuery.Message.MessageID,
-					"------------> Сделка заключена!",
+					"\xF0\x9F\x98\x81 Сделка заключена!",
 				)
 				bot.Send(msg)
 
@@ -118,7 +141,7 @@ func (ctrl *botCtrl) init(token string) {
 
 				for {
 					time.Sleep(time.Second * 1)
-					reportMsg, isFinish := deal.Process()
+					reportMsg, isFinish := deal.Process(balance, 40)
 
 					report := tgbotapi.NewMessage(
 						update.CallbackQuery.Message.Chat.ID,
@@ -126,33 +149,24 @@ func (ctrl *botCtrl) init(token string) {
 					)
 
 					if isFinish {
-						report.ReplyMarkup = &retryKeyboard
-						bot.Send(report)
+						msg := tgbotapi.NewMessage(
+							update.CallbackQuery.Message.Chat.ID,
+							reportMsg + fmt.Sprintf("\nТвой баланс: %vр.", balance.Current()))
+						msg.ReplyMarkup = &retryKeyboard
+
+						bot.Send(msg)
 						break
 					}
 
 					bot.Send(report)
+
 				}
 			case "refill_100":
-				fallthrough
+				refill(100)
 			case "refill_300":
-				fallthrough
+				refill(300)
 			case "refill_500":
-				msg := tgbotapi.NewEditMessageText(
-					update.CallbackQuery.Message.Chat.ID,
-					update.CallbackQuery.Message.MessageID,
-					"Успешное пополнение. Ваш баланс 1200р",
-				)
-				bot.Send(msg)
-
-				msg1 := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Поехали!")
-				msg1.ReplyMarkup = &backKeyboard
-				bot.Send(msg1)
-
-				msg2 := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, getRandomAdvice())
-				msg2.ReplyMarkup = &vitaliyKeyboard
-
-				bot.Send(msg2)
+				refill(500)
 			}
 
 			continue
@@ -175,6 +189,13 @@ func (ctrl *botCtrl) init(token string) {
 
 		switch update.Message.Text {
 		case "Быстрая сделка":
+			if balance.Current() < 40 {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "На балансе маловато денег. Рекомендую пополниться")
+				msg.ReplyMarkup = refillKeyboard
+				bot.Send(msg)
+				continue
+			}
+
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Поехали!")
 			msg.ReplyMarkup = &backKeyboard
 			bot.Send(msg)

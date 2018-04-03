@@ -3,28 +3,26 @@ package dealMock
 import (
 	"math/rand"
 	"time"
+	"github.com/bezrukov/pihta_bot/modules/account"
 )
 
 type deal struct {
 	expired bool
 }
 
-var process = []string{
-	"Пока все отлично",
-	"Ты в плюсе",
-	"Красава",
-	"Тебе везет!",
-	"Все идет хорошо",
-	"Ты в минусе",
-	"Еще не все потеряно",
-	"Ушел в минус",
-	"Это нормально",
-	"Все еще может измениться",
+type finishResult struct {
+	msg string
+	isWin bool
 }
 
-var finish = []string{
-	"Так держать! Ты заработал 40р! Твой баланс 1200р",
-	"К сожалению ты проиграл. кнопка \"попробовать еще раз\" кнопка \"открыть такую же сделку x2\"",
+var process = []string{
+	"\xF0\x9F\x92\x94 Ты в минусе",
+	"\xE2\x9C\x85 Ты в плюсе",
+}
+
+var finish = []finishResult{
+	{msg: "Так держать! Ты заработал 40р! \xF0\x9F\x8E\x89\xF0\x9F\x8E\x89\xF0\x9F\x8E\x89", isWin: true},
+    {msg:"К сожалению ты проиграл.", isWin: false},
 }
 
 // Инициализация моков для сделок
@@ -49,9 +47,17 @@ func (d *deal) Start(timeOut int64)  {
 }
 
 // Процесс сделки, рандомные события, по завершении времени выдает рандомный резудьтат сделки
-func (d *deal) Process() (string, bool) {
+func (d *deal) Process(balance *account.Balance, dealCost int) (string, bool) {
 	if d.expired {
-		return finish[rand.Intn(len(finish))], true
+		result := finish[rand.Intn(len(finish))]
+
+		if result.isWin {
+			balance.Inc(dealCost)
+		} else {
+			balance.Dec(dealCost)
+		}
+
+		return result.msg, true
 	}
 	return process[rand.Intn(len(process))], false
 }
