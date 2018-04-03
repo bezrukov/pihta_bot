@@ -11,10 +11,13 @@ func initRoutes(port string) {
 	router := gin.Default()
 	gin.SetMode("debug")
 
-	// botCtrl := newBotCtrl()
+	finCtrl := newFinCtrl()
 
 	router.HEAD("/", ping) // this route for consul health check
 	router.GET("/", ping)  // this route for consul health check
+
+	router.GET("/balance", finCtrl.balance)
+	router.GET("/deals", finCtrl.deals)
 
 	router.Run(fmt.Sprintf(":%s", port))
 }
