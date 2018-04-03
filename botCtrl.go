@@ -77,6 +77,25 @@ func (ctrl *botCtrl) init(token string) {
 
 	for update := range updates {
 
+		refill := func(value int){
+			balance.Inc(value)
+			msg := tgbotapi.NewEditMessageText(
+				update.CallbackQuery.Message.Chat.ID,
+				update.CallbackQuery.Message.MessageID,
+				fmt.Sprintf("Успешное пополнение. Ваш баланс %vр", balance.Current()),
+			)
+			bot.Send(msg)
+
+			msg1 := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Поехали!")
+			msg1.ReplyMarkup = &backKeyboard
+			bot.Send(msg1)
+
+			msg2 := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, getRandomAdvice())
+			msg2.ReplyMarkup = &vitaliyKeyboard
+
+			bot.Send(msg2)
+		}
+
 		if update.CallbackQuery != nil {
 			switch update.CallbackQuery.Data {
 			case "deal":
@@ -140,30 +159,16 @@ func (ctrl *botCtrl) init(token string) {
 					}
 				}
 			case "refill_100":
-				fallthrough
+				refill(100)
 			case "refill_300":
-				fallthrough
+				refill(300)
 			case "refill_500":
-				msg := tgbotapi.NewEditMessageText(
-					update.CallbackQuery.Message.Chat.ID,
-					update.CallbackQuery.Message.MessageID,
-					"Успешное пополнение. Ваш баланс 1200р",
-				)
-				bot.Send(msg)
-
-				msg1 := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Поехали!")
-				msg1.ReplyMarkup = &backKeyboard
-				bot.Send(msg1)
-
-				msg2 := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, getRandomAdvice())
-				msg2.ReplyMarkup = &vitaliyKeyboard
-
-				bot.Send(msg2)
+				refill(500)
 			}
 
 			continue
 		}
-
+		
 		if update.Message == nil {
 			continue
 		}
