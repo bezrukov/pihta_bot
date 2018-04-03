@@ -132,7 +132,7 @@ func (ctrl *botCtrl) init(token string) {
 				msg := tgbotapi.NewEditMessageText(
 					update.CallbackQuery.Message.Chat.ID,
 					update.CallbackQuery.Message.MessageID,
-					"\xF0\x9F\x98\x81 Сделка заключена!",
+					"\xF0\x9F\x95\x90 Сделка заключена!",
 				)
 				bot.Send(msg)
 
@@ -151,10 +151,15 @@ func (ctrl *botCtrl) init(token string) {
 					if isFinish {
 						msg := tgbotapi.NewMessage(
 							update.CallbackQuery.Message.Chat.ID,
-							reportMsg + fmt.Sprintf("\nТвой баланс: %vр.", balance.Current()))
-						msg.ReplyMarkup = &retryKeyboard
-
+							reportMsg)
 						bot.Send(msg)
+
+						msg = tgbotapi.NewMessage(
+							update.CallbackQuery.Message.Chat.ID,
+							fmt.Sprintf("\nТвой баланс: %vр.", balance.Current()))
+						msg.ReplyMarkup = &retryKeyboard
+						bot.Send(msg)
+
 						break
 					}
 

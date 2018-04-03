@@ -16,13 +16,21 @@ type finishResult struct {
 }
 
 var process = []string{
-	"\xF0\x9F\x92\x94 Ты в минусе",
 	"\xE2\x9C\x85 Ты в плюсе",
+	"\xE2\x9C\x85 Пока все отлично",
+	"\xE2\x9C\x85 Красава",
+	"\xE2\x9C\x85 Тебе везет!",
+	"\xE2\x9C\x85 Все идет хорошо",
+
+	"\xF0\x9F\x92\x94 Еще не все потеряно",
+	"\xF0\x9F\x92\x94 Ушел в минус",
+	"\xF0\x9F\x92\x94 Все еще может измениться",
+	"\xF0\x9F\x92\x94 Потерпи чуть-чуть",
 }
 
 var finish = []finishResult{
-	{msg: "Так держать! Ты заработал 40р! \xF0\x9F\x8E\x89\xF0\x9F\x8E\x89\xF0\x9F\x8E\x89", isWin: true},
-    {msg:"К сожалению ты проиграл.", isWin: false},
+	{msg: "\xF0\x9F\x8E\x89\xF0\x9F\x8E\x89\xF0\x9F\x8E\x89 Так держать! Ты заработал 40р!", isWin: true},
+    {msg:"\xF0\x9F\x98\xBF К сожалению ты проиграл.", isWin: false},
 }
 
 // Инициализация моков для сделок
