@@ -46,23 +46,40 @@ var refillKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 )
 
 type User struct {
-	TelegramId  int
-	PlatformId  int64
-	Name        string
-	PhoneNumber string
+	Balance *account.Balance
 }
 
 var lastAdviceIndex = -1
 
 type botCtrl struct {
-	Users []User
+	Users map[int64]User
 }
 
 func newBotCtrl() *botCtrl {
-	return &botCtrl{}
+	return &botCtrl{Users: make(map[int64]User, 10)}
 }
 
-func run(update tgbotapi.Update, balance *account.Balance, bot *tgbotapi.BotAPI){
+func (ctrl *botCtrl) run(update tgbotapi.Update, bot *tgbotapi.BotAPI){
+	users := ctrl.Users
+
+	var chatId int64
+	if update.Message != nil {
+		chatId = update.Message.Chat.ID
+	}
+
+	if update.CallbackQuery != nil {
+		chatId = update.CallbackQuery.Message.Chat.ID
+	}
+
+	user, ok := users[chatId]
+
+	if !ok {
+		users[chatId] = User{Balance: account.NewBalance()}
+		user = users[chatId]
+	}
+
+	balance := user.Balance
+
 	refill := func(value int){
 		balance.Inc(value)
 		msg := tgbotapi.NewEditMessageText(
@@ -208,15 +225,13 @@ func (ctrl *botCtrl) init(token string) {
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
-	balance := account.NewBalance()
-
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
 	updates, err := bot.GetUpdatesChan(u)
 
 	for update := range updates {
-		go run(update, balance, bot)
+		go ctrl.run(update, bot)
 	}
 }
 
