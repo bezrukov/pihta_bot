@@ -206,7 +206,7 @@ func (ctrl *botCtrl) run(update tgbotapi.Update, bot *tgbotapi.BotAPI){
 		msg.ReplyMarkup = &refillKeyboard
 		bot.Send(msg)
 	case "Помощь":
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Виталя уже выехал к Вам!")
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "\xF0\x9F\x9A\x82 Виталя уже выехал к тебе!")
 		bot.Send(msg)
 	case "Назад":
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите пункт")
