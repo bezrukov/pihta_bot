@@ -168,7 +168,7 @@ func (ctrl *botCtrl) init(token string) {
 
 			continue
 		}
-		
+
 		if update.Message == nil {
 			continue
 		}
@@ -186,6 +186,13 @@ func (ctrl *botCtrl) init(token string) {
 
 		switch update.Message.Text {
 		case "Быстрая сделка":
+			if balance.Current() < 40 {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "На балансе маловато денег. Рекомендую пополниться")
+				msg.ReplyMarkup = refillKeyboard
+				bot.Send(msg)
+				continue
+			}
+
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Поехали!")
 			msg.ReplyMarkup = &backKeyboard
 			bot.Send(msg)
