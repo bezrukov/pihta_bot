@@ -3,12 +3,10 @@ package dealMock
 import (
 	"math/rand"
 	"time"
-	"fmt"
 )
 
 type deal struct {
 	expired bool
-
 }
 
 var process = []string{
@@ -35,19 +33,25 @@ func NewDeal() *deal {
 }
 
 func (d *deal) Start(timeOut int64)  {
-	timer1 := time.NewTimer(time.Duration(timeOut))
+	// c := make(chan bool, 1)
 
-	go func() {
-		<-timer1.C
-		fmt.Println("Expiret timer")
-		d.expired = true
-	}()
+	go func(dl *deal) {
+		timer1 := time.NewTimer(time.Second * time.Duration(timeOut))
+		for {
+			select {
+			case <-timer1.C:
+				dl.expired = true
+			}
+		}
+	}(d)
+
+
 }
 
 // Процесс сделки, рандомные события, по завершении времени выдает рандомный резудьтат сделки
-func (d *deal) Process() string {
+func (d *deal) Process() (string, bool) {
 	if d.expired {
-		return finish[rand.Intn(len(finish))]
+		return finish[rand.Intn(len(finish))], true
 	}
-	return process[rand.Intn(len(process))]
+	return process[rand.Intn(len(process))], false
 }
