@@ -19,6 +19,8 @@ func initRoutes(port string) {
 	router.GET("/balance", finCtrl.balance)
 	router.GET("/deals", finCtrl.deals)
 
+	router.GET("/duo-auth-on")
+
 	router.Run(fmt.Sprintf(":%s", port))
 }
 

@@ -18,6 +18,13 @@ var menuKeyboard = tgbotapi.NewReplyKeyboard(
 	),
 )
 
+type User struct {
+	TelegramId  int
+	PlatformId  int64
+	Name        string
+	PhoneNumber string
+}
+
 var vitaliyKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData("Торговать", "deal"),
@@ -28,13 +35,14 @@ var vitaliyKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 var lastAdviceIndex = -1
 
 type botCtrl struct {
+	Users []User
 }
 
 func newBotCtrl() *botCtrl {
 	return &botCtrl{}
 }
 
-func (ctrl *botCtrl) init(token string, userIds map[int]User) {
+func (ctrl *botCtrl) init(token string) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		log.Panic(err)
@@ -116,13 +124,6 @@ func (ctrl *botCtrl) init(token string, userIds map[int]User) {
 
 		if update.Message == nil {
 			continue
-		}
-		var userId int
-		userId = update.Message.From.ID
-
-		_, ok := userIds[userId]
-		if !ok {
-			userIds[userId] = User{Id: userId, Name: update.Message.From.FirstName + update.Message.From.LastName}
 		}
 
 		switch update.Message.Command() {
