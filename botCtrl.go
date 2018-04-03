@@ -3,11 +3,11 @@ package main
 import (
 	"log"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
-	"pihta_bot/modules/dealMock"
 	"time"
 	"math/rand"
 	"fmt"
-	"pihta_bot/modules/account"
+	"github.com/bezrukov/pihta_bot/modules/dealMock"
+	"github.com/bezrukov/pihta_bot/modules/account"
 )
 
 var menuKeyboard = tgbotapi.NewReplyKeyboard(
@@ -41,9 +41,7 @@ var retryKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 
 var refillKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData("100р", "refill_100"),
-		tgbotapi.NewInlineKeyboardButtonData("300р", "refill_300"),
-		tgbotapi.NewInlineKeyboardButtonData("500р", "refill_500"),
+		tgbotapi.NewInlineKeyboardButtonData("Пополнить", "refill_350"),
 	),
 )
 
@@ -119,11 +117,11 @@ func run(update tgbotapi.Update, balance *account.Balance, bot *tgbotapi.BotAPI)
 			bot.Send(msg)
 
 			deal := dealMock.NewDeal()
-			deal.Start(5)
+			deal.Start(6)
 
 			for {
 				time.Sleep(time.Second * 1)
-				reportMsg, isFinish := deal.Process(balance, 40)
+				reportMsg, isFinish := deal.Process(balance, 100)
 
 				report := tgbotapi.NewMessage(
 					update.CallbackQuery.Message.Chat.ID,
@@ -133,36 +131,22 @@ func run(update tgbotapi.Update, balance *account.Balance, bot *tgbotapi.BotAPI)
 				if isFinish {
 					msg := tgbotapi.NewMessage(
 						update.CallbackQuery.Message.Chat.ID,
-						reportMsg + fmt.Sprintf("\nТвой баланс: %vр.", balance.Current()))
-					msg.ReplyMarkup = &retryKeyboard
+						reportMsg)
+					bot.Send(msg)
 
+					msg = tgbotapi.NewMessage(
+						update.CallbackQuery.Message.Chat.ID,
+						fmt.Sprintf("\nТвой баланс: %vр.", balance.Current()))
+					msg.ReplyMarkup = &retryKeyboard
 					bot.Send(msg)
 					break
 				}
-					if isFinish {
-						msg := tgbotapi.NewMessage(
-							update.CallbackQuery.Message.Chat.ID,
-							reportMsg)
-						bot.Send(msg)
-
-						msg = tgbotapi.NewMessage(
-							update.CallbackQuery.Message.Chat.ID,
-							fmt.Sprintf("\nТвой баланс: %vр.", balance.Current()))
-						msg.ReplyMarkup = &retryKeyboard
-						bot.Send(msg)
-
-						break
-					}
 
 				bot.Send(report)
 
 			}
-		case "refill_100":
-			refill(100)
-		case "refill_300":
-			refill(300)
-		case "refill_500":
-			refill(500)
+		case "refill_350":
+			refill(350)
 		}
 
 		return
@@ -174,19 +158,19 @@ func run(update tgbotapi.Update, balance *account.Balance, bot *tgbotapi.BotAPI)
 
 	switch update.Message.Command() {
 	case "start":
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Привет, Гришка!")
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Виталий приветсвтует тебя, " + update.Message.Chat.FirstName + "!")
 		msg.ReplyMarkup = &menuKeyboard
 		bot.Send(msg)
 
-		msg = tgbotapi.NewMessage(update.Message.Chat.ID, "На балансе маловато денег. Рекомендую пополниться")
+		msg = tgbotapi.NewMessage(update.Message.Chat.ID, "На балансе маловато денег. Виталя рекомендует пополниться")
 		msg.ReplyMarkup = refillKeyboard
 		bot.Send(msg)
 	}
 
 	switch update.Message.Text {
 	case "Быстрая сделка":
-		if balance.Current() < 40 {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "На балансе маловато денег. Рекомендую пополниться")
+		if balance.Current() < 100 {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "На балансе маловато денег. Виталя рекомендует пополниться")
 			msg.ReplyMarkup = refillKeyboard
 			bot.Send(msg)
 			return
@@ -201,11 +185,11 @@ func run(update tgbotapi.Update, balance *account.Balance, bot *tgbotapi.BotAPI)
 
 		bot.Send(msg)
 	case "Пополнение":
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите сумму пополнения")
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Нажмите кнопку пополнить")
 		msg.ReplyMarkup = &refillKeyboard
 		bot.Send(msg)
 	case "Помощь":
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Помоги себе сам")
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Виталя уже выехал к Вам!")
 		bot.Send(msg)
 	case "Назад":
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите пункт")
@@ -238,11 +222,11 @@ func (ctrl *botCtrl) init(token string) {
 
 func getRandomAdvice() string {
 	var advices = []string{
-		"Виталя считает, что стоит попробовать GBPUSD. Не робей, открывай сделку скорей!",
-		"Виталя считает, что ты засиделся без дела. Вот тебе подходящий актив -  Gold. Пора вернуться в торги!",
-		"Виталя заметил, что Bitcoin вырос на 5% за последнее время. Давай попробуем заработать на этом",
-		"Виталя заметил, что Silver упал на 5% за последнее время. Давай попробуем заработать на этом",
-		"Витале кажется, что ты еще не пробовал GBPJPY. Не теряй эту возможность, открывай сделку.",
+		"\xF0\x9F\x94\xA5 Виталя считает, что стоит попробовать GBPUSD. Не робей, открывай сделку скорей!",
+		"\xF0\x9F\x94\xA5 Виталя считает, что ты засиделся без дела. Вот тебе подходящий актив -  Gold. Пора вернуться в торги!",
+		"\xF0\x9F\x94\xA5 Виталя заметил, что Bitcoin вырос на 5% за последнее время. Давай попробуем заработать на этом",
+		"\xF0\x9F\x94\xA5 Виталя заметил, что Silver упал на 5% за последнее время. Давай попробуем заработать на этом",
+		"\xF0\x9F\x94\xA5 Витале кажется, что ты еще не пробовал GBPJPY. Не теряй эту возможность, открывай сделку.",
 	}
 
 	var isEqual = true

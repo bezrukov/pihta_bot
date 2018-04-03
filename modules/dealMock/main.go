@@ -3,7 +3,7 @@ package dealMock
 import (
 	"math/rand"
 	"time"
-	"pihta_bot/modules/account"
+	"github.com/bezrukov/pihta_bot/modules/account"
 )
 
 type deal struct {
@@ -29,8 +29,8 @@ var process = []string{
 }
 
 var finish = []finishResult{
-	{msg: "\xF0\x9F\x8E\x89\xF0\x9F\x8E\x89\xF0\x9F\x8E\x89 Так держать! Ты заработал 40р!", isWin: true},
-    {msg:"\xF0\x9F\x98\xBF К сожалению ты проиграл.", isWin: false},
+	{msg: "\xF0\x9F\x92\xB0 Так держать! Ты заработал 100р!", isWin: true},
+    {msg: "\xF0\x9F\x98\xBF К сожалению ты проиграл.", isWin: false},
 }
 
 // Инициализация моков для сделок
