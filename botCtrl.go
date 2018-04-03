@@ -3,15 +3,29 @@ package main
 import (
 	"log"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/bezrukov/pihta_bot/modules/dealMock"
+	"time"
+	"math/rand"
 )
 
-var numericKeyboard = tgbotapi.NewReplyKeyboard(
+var menuKeyboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton("Быстрая сделка"),
+	),
+	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton("Пополнение"),
 		tgbotapi.NewKeyboardButton("Помощь"),
 	),
 )
+
+var vitaliyKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Торговать", "deal"),
+		tgbotapi.NewInlineKeyboardButtonData("Другой совет", "advice"),
+	),
+)
+
+var lastAdviceIndex = -1
 
 type botCtrl struct {
 }
@@ -39,21 +53,62 @@ func (ctrl *botCtrl) init(token string, userIds map[int]User) {
 
 		if update.CallbackQuery != nil {
 			switch update.CallbackQuery.Data {
-			case "assets":
-				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Выбирай вверх или вниз")
-				msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+			case "deal":
+				msg := tgbotapi.NewEditMessageText(
+					update.CallbackQuery.Message.Chat.ID,
+					update.CallbackQuery.Message.MessageID,
+					"Куда пойдёт актив через 1 минуту?")
+				keyboard := tgbotapi.NewInlineKeyboardMarkup(
 					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("Вверх", "Up"),
-						tgbotapi.NewInlineKeyboardButtonData("Вниз", "Down"),
+						tgbotapi.NewInlineKeyboardButtonData("Вверх", "up"),
+						tgbotapi.NewInlineKeyboardButtonData("Вниз", "down"),
 					),
 				)
+				msg.ReplyMarkup = &keyboard
+
 				bot.Send(msg)
-			case "Up":
+			case "advice":
+				msg := tgbotapi.NewEditMessageText(
+					update.CallbackQuery.Message.Chat.ID,
+					update.CallbackQuery.Message.MessageID,
+					getRandomAdvice())
+				msg.ReplyMarkup = &vitaliyKeyboard
+
+				bot.Send(msg)
+			case "up":
 				fallthrough
-			case "Down":
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Сделка заключена")
-				msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+			case "down":
+				msg := tgbotapi.NewEditMessageText(
+					update.CallbackQuery.Message.Chat.ID,
+					update.CallbackQuery.Message.MessageID,
+					"Сделка заключена!",
+				)
 				bot.Send(msg)
+
+				deal := dealMock.NewDeal()
+				deal.Start(5)
+
+				for {
+					time.Sleep(time.Second * 1)
+					reportMsg, isFinish := deal.Process()
+
+					report := tgbotapi.NewMessage(
+						update.CallbackQuery.Message.Chat.ID,
+						reportMsg,
+					)
+					bot.Send(report)
+
+					if isFinish {
+						msg := tgbotapi.NewEditMessageText(
+							update.CallbackQuery.Message.Chat.ID,
+							update.CallbackQuery.Message.MessageID,
+							getRandomAdvice())
+						msg.ReplyMarkup = &vitaliyKeyboard
+
+						bot.Send(msg)
+						break
+					}
+				}
 			}
 
 			continue
@@ -73,21 +128,14 @@ func (ctrl *botCtrl) init(token string, userIds map[int]User) {
 		switch update.Message.Command() {
 		case "start":
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите пункт")
-			msg.ReplyMarkup = numericKeyboard
+			msg.ReplyMarkup = menuKeyboard
 			bot.Send(msg)
 		}
 
 		switch update.Message.Text {
 		case "Быстрая сделка":
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, " Виталя выбрал все за тебя: "+
-				"сумма сделки 50 рублей, и продолжительность 1 минута")
-			msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
-				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonData("USD CLP", "assets"),
-					tgbotapi.NewInlineKeyboardButtonData("EUR AUD", "assets"),
-					tgbotapi.NewInlineKeyboardButtonData("GBP JPY", "assets"),
-				),
-			)
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, getRandomAdvice())
+			msg.ReplyMarkup = &vitaliyKeyboard
 
 			bot.Send(msg)
 		case "Пополнение":
@@ -95,13 +143,30 @@ func (ctrl *botCtrl) init(token string, userIds map[int]User) {
 			bot.Send(msg)
 		case "Помощь":
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Помоги себе сам")
-
-			msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
-				tgbotapi.NewInlineKeyboardRow(
-					tgbotapi.NewInlineKeyboardButtonData("Hi", "USD CLP"),
-				),
-			)
 			bot.Send(msg)
 		}
 	}
+}
+
+func getRandomAdvice() string {
+	var advices = []string{
+		"Виталя считает, что стоит попробовать GBPUSD. Не робей, открывай сделку скорей!",
+		"Виталя считает, что ты засиделся без дела. Вот тебе подходящий актив -  Gold. Пора вернуться в торги!",
+		"Виталя заметил, что Bitcoin вырос на 5% за последнее время. Давай попробуем заработать на этом",
+		"Виталя заметил, что Silver упал на 5% за последнее время. Давай попробуем заработать на этом",
+		"Виталя кажется, что ты еще не пробовал GBPJPY. Не теряй эту возможность, открывай сделку.",
+	}
+
+	var isEqual = true
+	var index = -1
+
+	for isEqual {
+		index = rand.Intn(len(advices))
+		if index != lastAdviceIndex {
+			lastAdviceIndex = index
+			isEqual = false
+		}
+	}
+
+	return advices[index]
 }
