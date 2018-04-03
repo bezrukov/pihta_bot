@@ -31,6 +31,12 @@ var vitaliyKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	),
 )
 
+var retryKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Попробовать ещё раз", "advice"),
+	),
+)
+
 var refillKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData("100р", "refill_100"),
@@ -103,7 +109,7 @@ func (ctrl *botCtrl) init(token string) {
 				msg := tgbotapi.NewEditMessageText(
 					update.CallbackQuery.Message.Chat.ID,
 					update.CallbackQuery.Message.MessageID,
-					"Сделка заключена!",
+					"------------> Сделка заключена!",
 				)
 				bot.Send(msg)
 
@@ -118,17 +124,14 @@ func (ctrl *botCtrl) init(token string) {
 						update.CallbackQuery.Message.Chat.ID,
 						reportMsg,
 					)
-					bot.Send(report)
 
 					if isFinish {
-						msg := tgbotapi.NewMessage(
-							update.CallbackQuery.Message.Chat.ID,
-							getRandomAdvice())
-						msg.ReplyMarkup = &vitaliyKeyboard
-
-						bot.Send(msg)
+						report.ReplyMarkup = &retryKeyboard
+						bot.Send(report)
 						break
 					}
+
+					bot.Send(report)
 				}
 			case "refill_100":
 				fallthrough
@@ -201,7 +204,7 @@ func getRandomAdvice() string {
 		"Виталя считает, что ты засиделся без дела. Вот тебе подходящий актив -  Gold. Пора вернуться в торги!",
 		"Виталя заметил, что Bitcoin вырос на 5% за последнее время. Давай попробуем заработать на этом",
 		"Виталя заметил, что Silver упал на 5% за последнее время. Давай попробуем заработать на этом",
-		"Виталя кажется, что ты еще не пробовал GBPJPY. Не теряй эту возможность, открывай сделку.",
+		"Витале кажется, что ты еще не пробовал GBPJPY. Не теряй эту возможность, открывай сделку.",
 	}
 
 	var isEqual = true
