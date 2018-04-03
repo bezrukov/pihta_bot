@@ -4,13 +4,8 @@ import (
 	"flag"
 	"log"
 	"os"
-	// "pihta_bot/modules/dealMock"
 )
 
-type User struct {
-	Id int
-	Name string
-}
 func main() {
 
 	var (
@@ -18,8 +13,6 @@ func main() {
 		token = flag.String("token", "", "Telegram Bot Token")
 		port = flag.String("port", "2000", "Port application")
 	)
-
-	userIds := map[int]User{}
 
 	flag.Parse()
 
@@ -36,7 +29,7 @@ func main() {
 
 	botCtrl := newBotCtrl()
 
-	botCtrl.init(*token, userIds)
+	botCtrl.init(*token)
 
 	// TODO пример того как работать со сделками
 	//deal := dealMock.NewDeal()
