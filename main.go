@@ -30,10 +30,4 @@ func main() {
 	botCtrl := newBotCtrl()
 
 	botCtrl.init(*token)
-
-	// TODO пример того как работать со сделками
-	//deal := dealMock.NewDeal()
-	//
-	//deal.Start(5)
-	//result, isFinish := deal.Process()
 }
