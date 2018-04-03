@@ -18,12 +18,11 @@ var menuKeyboard = tgbotapi.NewReplyKeyboard(
 	),
 )
 
-type User struct {
-	TelegramId  int
-	PlatformId  int64
-	Name        string
-	PhoneNumber string
-}
+var backKeyboard = tgbotapi.NewReplyKeyboard(
+	tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton("Назад"),
+	),
+)
 
 var vitaliyKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	tgbotapi.NewInlineKeyboardRow(
@@ -31,6 +30,21 @@ var vitaliyKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardButtonData("Другой совет", "advice"),
 	),
 )
+
+var refillKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("100р", "refill_100"),
+		tgbotapi.NewInlineKeyboardButtonData("300р", "refill_300"),
+		tgbotapi.NewInlineKeyboardButtonData("500р", "refill_500"),
+	),
+)
+
+type User struct {
+	TelegramId  int
+	PlatformId  int64
+	Name        string
+	PhoneNumber string
+}
 
 var lastAdviceIndex = -1
 
@@ -107,9 +121,8 @@ func (ctrl *botCtrl) init(token string) {
 					bot.Send(report)
 
 					if isFinish {
-						msg := tgbotapi.NewEditMessageText(
+						msg := tgbotapi.NewMessage(
 							update.CallbackQuery.Message.Chat.ID,
-							update.CallbackQuery.Message.MessageID,
 							getRandomAdvice())
 						msg.ReplyMarkup = &vitaliyKeyboard
 
@@ -117,6 +130,26 @@ func (ctrl *botCtrl) init(token string) {
 						break
 					}
 				}
+			case "refill_100":
+				fallthrough
+			case "refill_300":
+				fallthrough
+			case "refill_500":
+				msg := tgbotapi.NewEditMessageText(
+					update.CallbackQuery.Message.Chat.ID,
+					update.CallbackQuery.Message.MessageID,
+					"Успешное пополнение. Ваш баланс 1200р",
+				)
+				bot.Send(msg)
+
+				msg1 := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "Поехали!")
+				msg1.ReplyMarkup = &backKeyboard
+				bot.Send(msg1)
+
+				msg2 := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, getRandomAdvice())
+				msg2.ReplyMarkup = &vitaliyKeyboard
+
+				bot.Send(msg2)
 			}
 
 			continue
@@ -128,22 +161,35 @@ func (ctrl *botCtrl) init(token string) {
 
 		switch update.Message.Command() {
 		case "start":
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите пункт")
-			msg.ReplyMarkup = menuKeyboard
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Привет, Гришка!")
+			msg.ReplyMarkup = &menuKeyboard
+			bot.Send(msg)
+
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "На балансе маловато денег. Рекомендую пополниться")
+			msg.ReplyMarkup = refillKeyboard
 			bot.Send(msg)
 		}
 
 		switch update.Message.Text {
 		case "Быстрая сделка":
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, getRandomAdvice())
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Поехали!")
+			msg.ReplyMarkup = &backKeyboard
+			bot.Send(msg)
+
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, getRandomAdvice())
 			msg.ReplyMarkup = &vitaliyKeyboard
 
 			bot.Send(msg)
 		case "Пополнение":
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Вас пополнили")
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите сумму пополнения")
+			msg.ReplyMarkup = &refillKeyboard
 			bot.Send(msg)
 		case "Помощь":
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Помоги себе сам")
+			bot.Send(msg)
+		case "Назад":
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите пункт")
+			msg.ReplyMarkup = menuKeyboard
 			bot.Send(msg)
 		}
 	}
