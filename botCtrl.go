@@ -3,9 +3,11 @@ package main
 import (
 	"log"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
-	"github.com/bezrukov/pihta_bot/modules/dealMock"
+	"pihta_bot/modules/dealMock"
+	"pihta_bot/modules/account"
 	"time"
 	"math/rand"
+	"fmt"
 )
 
 var menuKeyboard = tgbotapi.NewReplyKeyboard(
@@ -51,6 +53,8 @@ func (ctrl *botCtrl) init(token string) {
 	bot.Debug = true
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
+
+	balance := account.NewBalance()
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
@@ -98,7 +102,7 @@ func (ctrl *botCtrl) init(token string) {
 
 				for {
 					time.Sleep(time.Second * 1)
-					reportMsg, isFinish := deal.Process()
+					reportMsg, isFinish := deal.Process(balance, 40)
 
 					report := tgbotapi.NewMessage(
 						update.CallbackQuery.Message.Chat.ID,
@@ -107,6 +111,11 @@ func (ctrl *botCtrl) init(token string) {
 					bot.Send(report)
 
 					if isFinish {
+						balanceMsg := tgbotapi.NewMessage(
+							update.CallbackQuery.Message.Chat.ID,
+							fmt.Sprintf("Твой баланс: %vр.", balance.Current()),
+						)
+						bot.Send(balanceMsg)
 						msg := tgbotapi.NewEditMessageText(
 							update.CallbackQuery.Message.Chat.ID,
 							update.CallbackQuery.Message.MessageID,
