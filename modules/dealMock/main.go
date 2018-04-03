@@ -3,7 +3,7 @@ package dealMock
 import (
 	"math/rand"
 	"time"
-	"github.com/bezrukov/pihta_bot/modules/account"
+	"pihta_bot/modules/account"
 )
 
 type deal struct {
